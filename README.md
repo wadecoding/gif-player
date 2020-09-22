@@ -25,12 +25,14 @@ Pull requests are more than welcome.
 
 ## Keybindings
 
-| Key              | Action                                        |
-| ---------------- | --------------------------------------------- |
-| Ctrl+S           | Save the present frame as a single image file |
-| Ctrl+Space       | Play / Pause                                  |
-| Ctrl+Right arrow | Next frame                                    |
-| Ctrl+Left arrow  | Previous frame                                |
+| Key              | Action                                         |
+| ---------------- | ---------------------------------------------- |
+| Ctrl+S           | Save the present frame as a single image file  |
+| Ctrl+Space       | Play / Pause                                   |
+| Ctrl+Right arrow | Next frame                                     |
+| Ctrl+Left arrow  | Previous frame                                 |
+| Ctrl+Up arrow    | Speed up the playback rate by x2, x4, x8...    |
+| Ctrl+Down arrow  | Speed down the playback rate by x0.5, x0.25... |
 
 ## Future updates
 * Speed up the time to load the previous frame
