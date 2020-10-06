@@ -82,7 +82,7 @@ namespace GIFPlayer
             openFileDialog.Filter = "gif files (*.gif)|*.*";
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                Load(openFileDialog.FileName);
+                LoadFile(openFileDialog.FileName);
             }
         }
 
@@ -377,10 +377,10 @@ namespace GIFPlayer
         private void MainForm_DragDrop(object sender, DragEventArgs e)
         {
             string[] files = e.Data.GetData(DataFormats.FileDrop, false) as string[];
-            Load(files[0]);
+            LoadFile(files[0]);
         }
 
-        private void Load(string filepath)
+        private void LoadFile(string filepath)
         {
             gifFileInfo.Initialize(filepath);
             gifFileStatus.Initialize(true);
