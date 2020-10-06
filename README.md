@@ -36,7 +36,6 @@ Pull requests are more than welcome.
 
 ## Future updates
 * Speed up the time to load the previous frame
-* Drag + Drop feature
 * Associate file extension
 
 ## Dependencies
