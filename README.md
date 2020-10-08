@@ -2,9 +2,9 @@
 
 # GIFPlayer
 
-GIFPlayer is a GIF player that allows for frame-by-frame playback, built-in C#.
-It provides intuitive graphical UI to allow users to easily manipulate the animated GIF playback.
-Multiple features including autoplay, frame-by-frame adjustment, save a frame as a file, seek bar, real-time frame state, and more.
+A GIF player that allows for **FAST** frame-by-frame playback, built-in C#.
+It provides intuitive graphical UI to allow users to easily manipulate.
+Multiple features are available; autoplay, frame-by-frame adjustment, save a frame as a file, seek bar, real-time frame state, and more.
 
 <div align="center"><img alt="screenshot" src="images/sample.png"></div>
 
@@ -35,7 +35,6 @@ Pull requests are more than welcome.
 | Ctrl+Down arrow  | Speed down the playback rate by x0.5, x0.25... |
 
 ## Future updates
-* Speed up the time to load the previous frame
 * Associate file extension
 
 ## Dependencies
