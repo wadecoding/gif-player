@@ -22,6 +22,14 @@ namespace GIFPlayer
             InitializeComponent();
         }
 
+        public static Image FromFile(string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            MemoryStream ms = new MemoryStream(bytes);
+            Image img = Image.FromStream(ms);
+            return img;
+        }
+
         public struct GIFFileInfo
         {
             public string filePath { get; private set; }
@@ -34,7 +42,8 @@ namespace GIFPlayer
             public void Initialize(string _filePath)
             {
                 filePath = _filePath;
-                image = Image.FromFile(_filePath);
+                if (image != null) { image.Dispose(); }
+                image = FromFile(filePath);
                 dimension = new FrameDimension(image.FrameDimensionsList.First());
                 totalFrames = image.GetFrameCount(dimension);
                 activeFrame = 1;
