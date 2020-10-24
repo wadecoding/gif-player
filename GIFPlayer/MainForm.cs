@@ -328,6 +328,7 @@ namespace GIFPlayer
 
         private async void LoadFile(string path)
         {
+            this.Text = "Loading - GIFPlayer";
             await Task.Run(() => manager.Set(path));
             timer.Interval = manager.Delay;
             seekbar.Maximum = manager.TotalFramesCount;
@@ -336,6 +337,7 @@ namespace GIFPlayer
             propertyButton.Enabled = true;
             seekbar.Enabled = true;
             controlButton.Enabled = true;
+            this.Text = $"{ Path.GetFileName(manager.Path) } - GIFPlayer";
             Play();
         }
 
