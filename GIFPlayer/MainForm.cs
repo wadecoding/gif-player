@@ -85,7 +85,7 @@ namespace GIFPlayer
 
         private void ChangeFrameView(int presentFrame, int totalFrame)
         {
-            int presentFrameNumber = presentFrame++;
+            int presentFrameNumber = presentFrame + 1;
             ChangeFrameCounter(presentFrameNumber, totalFrame);
             seekbar.Value = presentFrameNumber;
         }
@@ -326,9 +326,9 @@ namespace GIFPlayer
             LoadFile(files[0]);
         }
 
-        private void LoadFile(string path)
+        private async void LoadFile(string path)
         {
-            manager.Set(path);
+            await Task.Run(() => manager.Set(path));
             timer.Interval = manager.Delay;
             seekbar.Maximum = manager.TotalFramesCount;
             seekbar.Value = 1;

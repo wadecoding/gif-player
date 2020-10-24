@@ -22,15 +22,17 @@ namespace GIFPlayer
         private Image[] frames;
         public override Image Set(string path)
         {
-            FileStream fs = File.OpenRead(path);
-            source = new Bitmap(fs);
-            FrameDimension dimension = new FrameDimension(source.FrameDimensionsList[0]);
-            TotalFramesCount = source.GetFrameCount(dimension);
-            frames = new Image[TotalFramesCount];
-            for (int i = 0; i < TotalFramesCount; i++)
+            using (FileStream fs = File.OpenRead(path))
             {
-                source.SelectActiveFrame(dimension, i);
-                frames[i] = new Bitmap(source);
+                source = new Bitmap(fs);
+                FrameDimension dimension = new FrameDimension(source.FrameDimensionsList[0]);
+                TotalFramesCount = source.GetFrameCount(dimension);
+                frames = new Image[TotalFramesCount];
+                for (int i = 0; i < TotalFramesCount; i++)
+                {
+                    source.SelectActiveFrame(dimension, i);
+                    frames[i] = new Bitmap(source);
+                }
             }
             return source;
         }
