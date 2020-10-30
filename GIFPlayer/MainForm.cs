@@ -355,7 +355,21 @@ namespace GIFPlayer
                 e.Effect = DragDropEffects.None;
             }
         }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            if (args.Count() > 1)
+            {
+                string filepath = args[1];
+                if (File.Exists(filepath))
+                {
+                    LoadFile(filepath);
+                }
+            }
+        }
     }
+
     public class ImageCache
     {
         Image[] frames;
