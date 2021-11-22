@@ -417,5 +417,10 @@ namespace GIFPlayer
                 e.Effect = DragDropEffects.None;
             }
         }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            this.pictureBox.AllowDrop = true;
+        }
     }
 }

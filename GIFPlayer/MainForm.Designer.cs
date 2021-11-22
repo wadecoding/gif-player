@@ -87,7 +87,7 @@
             // 
             this.openButton.AutoSize = false;
             this.openButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.openButton.Font = new System.Drawing.Font("Open Sans", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.openButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.openButton.Image = ((System.Drawing.Image)(resources.GetObject("openButton.Image")));
             this.openButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.openButton.Name = "openButton";
@@ -196,7 +196,7 @@
             // frameCounter
             // 
             this.frameCounter.Name = "frameCounter";
-            this.frameCounter.Size = new System.Drawing.Size(90, 36);
+            this.frameCounter.Size = new System.Drawing.Size(104, 36);
             this.frameCounter.Text = "Frames: 000/000";
             // 
             // splitContainer1
@@ -303,6 +303,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.Text = "GIFPlayer";
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
             this.menubar.ResumeLayout(false);
