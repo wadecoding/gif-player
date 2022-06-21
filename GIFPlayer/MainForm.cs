@@ -15,6 +15,7 @@ using System.Reflection;
 
 namespace GIFPlayer
 {
+
     public partial class MainForm : Form
     {
         public MainForm()
@@ -22,70 +23,8 @@ namespace GIFPlayer
             InitializeComponent();
         }
 
-        public static Image FromFile(string path)
-        {
-            byte[] bytes = File.ReadAllBytes(path);
-            MemoryStream ms = new MemoryStream(bytes);
-            Image img = Image.FromStream(ms);
-            return img;
-        }
-
-        public struct GIFFileInfo
-        {
-            public string filePath { get; private set; }
-            public Image image { get; private set; }
-            public FrameDimension dimension { get; private set; }
-            public int totalFrames { get; private set; }
-            public int activeFrame { get; private set; }
-            public float delayCoe { get; set; }
-            public int intrinsicDelay { get; private set; }
-            public void Initialize(string _filePath)
-            {
-                filePath = _filePath;
-                if (image != null) { image.Dispose(); }
-                image = FromFile(filePath);
-                dimension = new FrameDimension(image.FrameDimensionsList.First());
-                totalFrames = image.GetFrameCount(dimension);
-                activeFrame = 1;
-                PropertyItem item = gifFileInfo.image.GetPropertyItem(0x5100);
-                intrinsicDelay = (item.Value[0] + item.Value[1] * 256) * 10;
-                delayCoe = 1.0f;
-            }
-            public void SetActiveFrame(int frame)
-            {
-                image.SelectActiveFrame(dimension, frame);
-                activeFrame = frame;
-            }
-        }
-        struct GIFFileStatus
-        {
-            public enum Status
-            {
-                Playing, Pausing, SeekMoving
-            }
-            public Status status;
-            public bool isAutoplay;
-            public void ToggleAutoplay(bool? _autoplay)
-            {
-                if (_autoplay != null)
-                {
-                    isAutoplay = (bool)_autoplay;
-                }
-                else
-                {
-                    isAutoplay ^= true;
-                }
-            }
-            public void Initialize(bool _isAutoplay)
-            {
-                isAutoplay = _isAutoplay;
-                status = Status.Pausing;
-            }
-        }
-        static GIFFileInfo gifFileInfo;
-        static GIFFileStatus gifFileStatus;
-
-
+        PlayerStatus playerStatus = new PlayerStatus();
+        ImageManager manager = new ImageManager(new ImageCacheLoader());
         private void openButton_Click(object sender, EventArgs e)
         {
             openFileDialog.Filter = "gif files (*.gif)|*.*";
@@ -97,40 +36,40 @@ namespace GIFPlayer
 
         private void Play()
         {
-            ChangeStatus(GIFFileStatus.Status.Playing);
+            ChangeStatus(PlayerStatus.Status.Playing);
         }
         private void Stop()
         {
-            ChangeStatus(GIFFileStatus.Status.Pausing);
+            ChangeStatus(PlayerStatus.Status.Pausing);
         }
 
-        private void ChangeStatus(GIFFileStatus.Status status)
+        private void ChangeStatus(PlayerStatus.Status status)
         {
-            if (status == gifFileStatus.status) return;
+            if (status == playerStatus.status) return;
 
-            gifFileStatus.status = status;
+            playerStatus.status = status;
             switch (status)
             {
-                case GIFFileStatus.Status.Playing:
+                case PlayerStatus.Status.Playing:
                     ForwardActiveFrame();
-                    if (gifFileStatus.isAutoplay && timer.Enabled == false)
+                    if (playerStatus.isAutoplay && timer.Enabled == false)
                     {
                         timer.Start();
                     }
-                    controlButton.Image = Properties.Resources.stop_smaller;
+                    controlButton.Image = Resources.stop_smaller;
                     stopButton.Enabled = true;
                     playButton.Enabled = false;
                     break;
-                case GIFFileStatus.Status.Pausing:
+                case PlayerStatus.Status.Pausing:
                     if (timer.Enabled)
                     {
                         timer.Stop();
                     }
-                    controlButton.Image = Properties.Resources.play_smaller;
+                    controlButton.Image = Resources.play_smaller;
                     stopButton.Enabled = false;
                     playButton.Enabled = true;
                     break;
-                case GIFFileStatus.Status.SeekMoving:
+                case PlayerStatus.Status.SeekMoving:
                     if (timer.Enabled)
                     {
                         timer.Stop();
@@ -139,16 +78,16 @@ namespace GIFPlayer
             }
         }
 
-        private void DrawPresentFrame()
+        private void DrawPresentFrame(int idx)
         {
-            pictureBox.Image = gifFileInfo.image;
+            pictureBox.Image = manager.Get(idx);
         }
 
         private void ChangeFrameView(int presentFrame, int totalFrame)
         {
-            presentFrame++;
-            ChangeFrameCounter(presentFrame, totalFrame);
-            seekbar.Value = presentFrame;
+            int presentFrameNumber = presentFrame + 1;
+            ChangeFrameCounter(presentFrameNumber, totalFrame);
+            seekbar.Value = presentFrameNumber;
         }
 
         private void ChangeFrameCounter(int presentFrame, int totalFrame)
@@ -159,10 +98,9 @@ namespace GIFPlayer
 
         public void ChangeActiveFrame(int frame)
         {
-            gifFileInfo.SetActiveFrame(frame);
-            DrawPresentFrame();
-            ChangeFrameView(gifFileInfo.activeFrame, gifFileInfo.totalFrames);
-            if (gifFileInfo.activeFrame == 0)
+            DrawPresentFrame(frame);
+            ChangeFrameView(manager.ActiveFrameIndex, manager.TotalFramesCount);
+            if (manager.ActiveFrameIndex == 0)
             {
                 backwardButton.Enabled = false;
             }
@@ -170,7 +108,7 @@ namespace GIFPlayer
             {
                 backwardButton.Enabled = true;
             }
-            if (gifFileInfo.activeFrame + 1 == gifFileInfo.totalFrames)
+            if (manager.ActiveFrameIndex + 1 == manager.TotalFramesCount)
             {
                 forwardButton.Enabled = false;
             }
@@ -182,14 +120,16 @@ namespace GIFPlayer
 
         public void ForwardActiveFrame(int increment = 1)
         {
-            if (gifFileInfo.activeFrame + increment + 1 <= gifFileInfo.totalFrames)
+            if (manager.ActiveFrameIndex + increment + 1 <= manager.TotalFramesCount)
             {
-                ChangeActiveFrame(gifFileInfo.activeFrame + increment);
+                manager.ActiveFrameIndex += increment;
+                ChangeActiveFrame(manager.ActiveFrameIndex);
             }
-            else if (gifFileInfo.activeFrame + increment + 1 > gifFileInfo.totalFrames)
+            else if (manager.ActiveFrameIndex + increment + 1 > manager.TotalFramesCount)
             {
-                if (Properties.Settings.Default.loop)
+                if (Settings.Default.loop)
                 {
+                    manager.ActiveFrameIndex = 0;
                     ChangeActiveFrame(0);
                 }
                 else
@@ -202,22 +142,24 @@ namespace GIFPlayer
         }
         public void BackwardActiveFrame(int decrement = 1)
         {
-            if (gifFileInfo.activeFrame - decrement >= 0)
+            if (manager.ActiveFrameIndex - decrement >= 0)
             {
-                ChangeActiveFrame(gifFileInfo.activeFrame - decrement);
+                manager.ActiveFrameIndex -= decrement;
+                ChangeActiveFrame(manager.ActiveFrameIndex);
             }
-            else if (gifFileInfo.activeFrame - decrement < 0)
+            else if (manager.ActiveFrameIndex - decrement < 0)
             {
-                if (Properties.Settings.Default.loop)
+                if (Settings.Default.loop)
                 {
-                    ChangeActiveFrame(gifFileInfo.totalFrames - 1);
+                    manager.ActiveFrameIndex = manager.TotalFramesCount - 1;
+                    ChangeActiveFrame(manager.ActiveFrameIndex);
                 }
             }
         }
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            if (gifFileStatus.isAutoplay)
+            if (playerStatus.isAutoplay)
             {
                 ForwardActiveFrame();
             }
@@ -239,12 +181,12 @@ namespace GIFPlayer
 
         private void controlButton_Click(object sender, EventArgs e)
         {
-            switch (gifFileStatus.status)
+            switch (playerStatus.status)
             {
-                case GIFFileStatus.Status.Pausing:
+                case PlayerStatus.Status.Pausing:
                     Play();
                     break;
-                case GIFFileStatus.Status.Playing:
+                case PlayerStatus.Status.Playing:
                     Stop();
                     break;
             }
@@ -252,13 +194,13 @@ namespace GIFPlayer
 
         private void forwardButton_Click(object sender, EventArgs e)
         {
-            ChangeStatus(GIFFileStatus.Status.Pausing);
+            ChangeStatus(PlayerStatus.Status.Pausing);
             ForwardActiveFrame();
         }
 
         private void backwardButton_Click(object sender, EventArgs e)
         {
-            ChangeStatus(GIFFileStatus.Status.Pausing);
+            ChangeStatus(PlayerStatus.Status.Pausing);
             BackwardActiveFrame();
         }
 
@@ -269,7 +211,8 @@ namespace GIFPlayer
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 string filePath = saveFileDialog.FileName;
-                gifFileInfo.image.Save(filePath, GetExtensionFromPath(filePath));
+                Image img = manager.Get(manager.ActiveFrameIndex);
+                img.Save(filePath, GetExtensionFromPath(filePath));
             }
         }
 
@@ -291,22 +234,22 @@ namespace GIFPlayer
 
         private void seekbar_ValueChanged(object sender, EventArgs e)
         {
-            if (gifFileStatus.status == GIFFileStatus.Status.SeekMoving)
+            if (playerStatus.status == PlayerStatus.Status.SeekMoving)
             {
-                ChangeFrameCounter(seekbar.Value, gifFileInfo.totalFrames);
+                ChangeFrameCounter(seekbar.Value, manager.TotalFramesCount);
             }
         }
 
-        GIFFileStatus.Status oldStatus;
+        PlayerStatus.Status oldStatus;
         private void seekbar_MouseDown(object sender, MouseEventArgs e)
         {
-            oldStatus = gifFileStatus.status;
-            ChangeStatus(GIFFileStatus.Status.SeekMoving);
+            oldStatus = playerStatus.status;
+            ChangeStatus(PlayerStatus.Status.SeekMoving);
         }
 
         private void seekbar_MouseUp(object sender, MouseEventArgs e)
         {
-            if (gifFileStatus.status == GIFFileStatus.Status.SeekMoving)
+            if (playerStatus.status == PlayerStatus.Status.SeekMoving)
             {
                 ChangeActiveFrame(seekbar.Value - 1);
                 ChangeStatus(oldStatus);
@@ -315,10 +258,10 @@ namespace GIFPlayer
 
         private void propertyButton_Click(object sender, EventArgs e)
         {
-            ChangeStatus(GIFFileStatus.Status.Pausing);
-            PropertyForm propertyForm = new PropertyForm(gifFileInfo);
+            ChangeStatus(PlayerStatus.Status.Pausing);
+            PropertyForm propertyForm = new PropertyForm(manager, playerStatus);
             propertyForm.ShowDialog();
-            ChangeStatus(GIFFileStatus.Status.Playing);
+            ChangeStatus(PlayerStatus.Status.Playing);
         }
 
         private void settingButton_Click(object sender, EventArgs e)
@@ -354,29 +297,23 @@ namespace GIFPlayer
                     }
                     break;
                 case (Keys.Control | Keys.Space):
-                    if (gifFileStatus.status == GIFFileStatus.Status.Playing)
+                    if (playerStatus.status == PlayerStatus.Status.Playing)
                     {
                         stopButton_Click(null, null);
                     }
-                    else if (gifFileStatus.status == GIFFileStatus.Status.Pausing)
+                    else if (playerStatus.status == PlayerStatus.Status.Pausing)
                     {
                         playButton_Click(null, null);
                     }
                     break;
                 case (Keys.Control | Keys.Up):
-                    if (gifFileInfo.image != null)
-                    {
-                        gifFileInfo.delayCoe *= 0.5f;
-                    }
+                    playerStatus.AdditionalDelayCoefficient *= 0.5f;
                     break;
                 case (Keys.Control | Keys.Down):
-                    if (gifFileInfo.image != null)
-                    {
-                        gifFileInfo.delayCoe *= 2.0f;
-                    }
+                    playerStatus.AdditionalDelayCoefficient *= 2.0f;
                     break;
             }
-            timer.Interval = (int)Math.Round(gifFileInfo.intrinsicDelay * gifFileInfo.delayCoe);
+            timer.Interval = (int)Math.Round(manager.Delay * playerStatus.AdditionalDelayCoefficient);
 
 
 
@@ -389,17 +326,18 @@ namespace GIFPlayer
             LoadFile(files[0]);
         }
 
-        private void LoadFile(string filepath)
+        private async void LoadFile(string path)
         {
-            gifFileInfo.Initialize(filepath);
-            gifFileStatus.Initialize(true);
-            timer.Interval = gifFileInfo.intrinsicDelay;
-            seekbar.Maximum = gifFileInfo.totalFrames;
+            this.Text = "Loading - GIFPlayer";
+            await Task.Run(() => manager.Set(path));
+            timer.Interval = manager.Delay;
+            seekbar.Maximum = manager.TotalFramesCount;
             seekbar.Value = 1;
             saveButton.Enabled = true;
             propertyButton.Enabled = true;
             seekbar.Enabled = true;
             controlButton.Enabled = true;
+            this.Text = $"{ Path.GetFileName(manager.Path) } - GIFPlayer";
             Play();
         }
 
@@ -420,7 +358,38 @@ namespace GIFPlayer
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            this.pictureBox.AllowDrop = true;
+            string[] args = Environment.GetCommandLineArgs();
+            if (args.Count() > 1)
+            {
+                string filepath = args[1];
+                if (File.Exists(filepath))
+                {
+                    LoadFile(filepath);
+                }
+            }
+        }
+    }
+
+    public class ImageCache
+    {
+        Image[] frames;
+        public Image Load(string path)
+        {
+            Stream stream = File.OpenRead(path);
+            Image src = Image.FromStream(stream);
+            FrameDimension dimension = new FrameDimension(src.FrameDimensionsList.First());
+            int frameCount = src.GetFrameCount(dimension);
+            frames = new Image[frameCount];
+            for (int i = 0; i < frameCount; i++)
+            {
+                src.SelectActiveFrame(FrameDimension.Page, i);
+                frames[i] = new Bitmap(src);
+            }
+            return src;
+        }
+        public Image Get(int index)
+        {
+            return frames[index];
         }
     }
 }

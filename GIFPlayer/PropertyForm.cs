@@ -12,15 +12,16 @@ namespace GIFPlayer
 {
     public partial class PropertyForm : Form
     {
-        public PropertyForm(MainForm.GIFFileInfo info)
+        public PropertyForm(ImageManager manager, PlayerStatus status)
         {
             InitializeComponent();
+            Image image = manager.Get(0);
             thumbnail.Enabled = false;
-            thumbnail.Image = info.image;
-            filePathTextBox.Text = $"{info.filePath}";
-            totalFramesLabel.Text = $"Total Frames: {info.totalFrames.ToString()}";
-            delayLabel.Text = $"Delay time: {info.intrinsicDelay.ToString()} X {info.delayCoe.ToString()} ms";
-            sizeLabel.Text = $"Size: {info.image.Width} x {info.image.Height}";
+            thumbnail.Image = image;
+            filePathTextBox.Text = $"{manager.Path}";
+            totalFramesLabel.Text = $"Total Frames: {manager.TotalFramesCount}";
+            delayLabel.Text = $"Delay time: {manager.Delay} X {status.AdditionalDelayCoefficient} ms";
+            sizeLabel.Text = $"Size: {image.Width} x {image.Height}";
         }
     }
 }
